@@ -3,8 +3,7 @@ const { ApolloServer } = require('apollo-server-express');
 const path = require('path');
 const { authMiddleware } = require('./utils/auth');
 
-
-const { typeDefs, resolvers } = require('./schema')
+const { typeDefs, resolvers } = require('./schemas')
 const db = require('./config/connection');
 
 const PORT = process.env.PORT || 3001;
@@ -39,7 +38,7 @@ const startApolloServer = async (typeDefs, resolvers) => {
       console.log(`Use GraphQL at http://localhost:${PORT}${server.graphqlPath}`);
     })
   })
-  };
-  
+};
+
 // Call the async function to start the server
 startApolloServer(typeDefs, resolvers);
