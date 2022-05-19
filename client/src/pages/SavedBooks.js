@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Jumbotron, Container, CardColumns, Card, Button } from 'react-bootstrap';
-import { Navigate } from 'react-router-dom';
 
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_ME } from '../utils/queries';
@@ -11,18 +10,22 @@ import { removeBookId } from '../utils/localStorage';
 
 
 const SavedBooks = () => {
+
+  // IS THIS WORKING? 
   const { loading, data } = useQuery(GET_ME);
+  const [userData, setUserData] = useState(data?.me || {});
 
-  const [userData, setUserData] = useState({});
-  const user = data?.me || {};
+  useEffect(() => {
   
+    const user = data?.me || {};
+  
+    console.log(user);
+  
+    setUserData(user);
+
+  },[data]);
+
   const [removeBook, { error }] = useMutation(REMOVE_BOOK);
-
-  // navigate to personal profile page if username is yours
-  if (Auth.loggedIn() && Auth.getProfile().data.username === user.username) {
-    return <Navigate to="/me" />;
-  }
-
   
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
@@ -35,14 +38,17 @@ const SavedBooks = () => {
     try {
 
       // removeBook goes here 
-      const response = await removeBook(bookId);
+      const { data } = await removeBook({
+        variables: { bookId },
+      });
 
-      if (!response.ok) {
+      if (!data) {
         throw new Error('something went wrong!');
       }
-
-      const updatedUser = await response.json();
+      const updatedUser = data.removeBook;
+      console.log(data);
       setUserData(updatedUser);
+
       // upon success, remove book's id from localStorage
       removeBookId(bookId);
     } catch (err) {
@@ -55,7 +61,7 @@ const SavedBooks = () => {
     return <h2>LOADING...</h2>;
   }
 
-  if (!user?.username) {
+  if (!userData?.username) {
     return (
       <h4>
         You need to be logged in to see this. Use the navigation links above to
@@ -73,12 +79,12 @@ const SavedBooks = () => {
       </Jumbotron>
       <Container>
         <h2>
-          {userData.savedBooks.length
+          {userData.savedBooks?.length
             ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <CardColumns>
-          {userData.savedBooks.map((book) => {
+          {userData.savedBooks?.map((book) => {
             return (
               <Card key={book.bookId} border='dark'>
                 {book.image ? <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' /> : null}
